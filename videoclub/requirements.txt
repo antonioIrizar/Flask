@@ -1,0 +1,4 @@
+flask
+flask-admin
+sqlalchemy==0.8.0
+flask-sqlalchemy
