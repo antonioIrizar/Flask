@@ -1,7 +1,9 @@
 import os
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
 from flask.ext.sqlalchemy import SQLAlchemy
-
+from flask.ext.wtf import Form
+from wtforms import TextField, TextAreaField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, ValidationError
 from flask.ext import admin
 from flask.ext.admin.contrib import sqla
 from flask.ext.admin import Admin, BaseView, expose
@@ -23,11 +25,11 @@ db = SQLAlchemy(app)
 class MyView(BaseView):
     @expose('/')
     def index(self):
-        return self.render('index.html')
+        return self.render('index.html',form=form)
 
 #if not login.current_user.is_authenticated():
 #           return redirect(url_for('.login_view'))
-
+"""
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
@@ -44,8 +46,22 @@ def login():
             flash('You were logged in')
             return redirect(url_for("admin.index"))            
     return render_template('login.html', error=error)
+"""
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        session['logged_in'] = True
+        flash('You were logged in')
+        return redirect(url_for('admin.index'))
+    return render_template('login.html', form=form)
 
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    flash('You were logged out')
+    return redirect(url_for('login'))
 
 class Movie(db.Model):
     __tablename__ = 'Movie'
@@ -76,6 +92,18 @@ class User (db.Model):
 class MovieAdmin(sqla.ModelView):
     column_display_pk = True
     form_columns = ['name', 'year', 'description', 'totalNumber', 'numberAvailable']
+
+
+class LoginForm(Form):
+
+    username = TextField("Username")
+    password = PasswordField("Password")
+    submit = SubmitField("Login")
+
+    def validate_user(self, field):
+        user = db.session.query(User).filter_by(name=username, password = password).first()
+        if user is None:
+            raise ValidationError("Invalid user")
 
 
 
