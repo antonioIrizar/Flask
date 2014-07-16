@@ -28,24 +28,22 @@ class MyView(BaseView):
 #if not login.current_user.is_authenticated():
 #           return redirect(url_for('.login_view'))
 
-	@expose('/login/', methods=['GET', 'POST'])
-	def login(self):
-	    error = None
-	    if request.method == 'POST':
-	        #request.form['username'] need be in []
-	        a = [request.form['username']]
-	        print a
-	        user = db.session.query(User).filter_by(name=a).first()
-	       # print user
-	        if user is None:
-	            error = 'Invalid username'
-	        elif user[1] != request.form['password']:
-	            error = 'Invalid password'
-	        else:
-	            session['logged_in'] = True
-	            flash('You were logged in')
-	            return self.render('prueba.html')            
-	    return self.render('index.html')
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        #request.form['username'] need be in []
+        username = [request.form['username']]
+        password = [request.form['password']]
+        user = db.session.query(User).filter_by(name=username).first()
+       
+        if user is None:
+            error = 'Invalid username or password'
+        else:
+            session['logged_in'] = True
+            flash('You were logged in')
+            return redirect(url_for("admin.index"))            
+    return render_template('login.html', error=error)
 
 
 
@@ -68,15 +66,10 @@ class User (db.Model):
 	password = db.Column(db.String(20))
 
 	def  __repr__(self):
-		return ['%s','%s'] % (self.name,self.password)
+		return '%s','%s' % (self.name,self.password)
 
 	def __unicode__(self):
-		return self.name
-
-	def __getitem__(self,key):
-		return self[key]
-
-
+		 print '%s - %s' % (self.name, self.password)
 
 
 
@@ -92,19 +85,17 @@ admin = admin.Admin(app, 'Videoclub')
 admin.add_view(MovieAdmin(Movie, db.session))
 #admin.add_view(TyreAdmin(Tyre, db.session))
 
-if __name__ == '__main__':
-
-    
+if __name__ == '__main__':    
 
     app_dir = os.path.realpath(os.path.dirname(__file__))
     database_path = os.path.join(app_dir, app.config['DATABASE_FILE'])
-    if not os.path.exists(database_path):
+    #if not os.path.exists(database_path):
         # Create DB
-        db.drop_all()
-        db.create_all()
-        test_user = User(name="test", password="test")
-        db.session.add(test_user)
+    db.drop_all()
+    db.create_all()
+    test_user = User(name="test", password="test")
+    db.session.add(test_user)
 
-        db.session.commit()
+    db.session.commit()
     # Start app
     app.run(debug=True)
