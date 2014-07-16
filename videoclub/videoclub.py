@@ -91,6 +91,11 @@ class User (db.Model):
 
 class MovieAdmin(sqla.ModelView):
 
+    def is_accessible(self):
+        if not session.get('logged_in'):
+            return False
+        return True
+
     def is_visible(self):
         if not session.get('logged_in'):
             return False
@@ -106,9 +111,10 @@ class LoginForm(Form):
     password = PasswordField("Password")
     submit = SubmitField("Login")
 
-    def validate_user(self,field):
-        
-        user = db.session.query(User).filter_by(name=self.username, password = self.password).first()
+    def validate_username(self,field):
+        print field.data
+        print "hola"
+        user = db.session.query(User).filter_by(name=field.data, password = field.data).first()
         if user is None:
             raise ValidationError("Invalid user")
 
