@@ -33,11 +33,12 @@ class MyAdmin(admin.AdminIndexView):
 #           return redirect(url_for('.login_view'))
     @expose('/login/', methods=['GET', 'POST'])
     def login(self):
-        form = LoginForm()
+        form = LoginForm(request.form)
         if form.validate_on_submit():
             session['logged_in'] = True
             flash('You were logged in')
             return redirect(url_for('.index'))
+        self._template_args['form'] = form
         return super(MyAdmin, self).index()
 
     @expose('/logout/')
@@ -84,6 +85,9 @@ class LoginForm(Form):
     submit = SubmitField("Login")
 
     def validate_user(self, field):
+        print username
+        print password
+        print "hola"
         user = db.session.query(User).filter_by(name=username, password = password).first()
         if user is None:
             raise ValidationError("Invalid user")

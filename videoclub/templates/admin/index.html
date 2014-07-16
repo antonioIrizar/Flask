@@ -7,7 +7,7 @@
         </h1>
         {% if not session.logged_in %}
         {% if form.error %}<p class=error><strong>Your form contains errors.</strong> {% endif %}
-        <form action="{{ url_for('login') }}" method=post>
+        <form action="" method=post>
             {{ form.hidden_tag() }}
             <dl>
                     <dt>{{form.username.label}}
@@ -19,7 +19,7 @@
         </form>
         {% else %}
             <p>
-                Your are logging. <a href="{{ url_for('logout') }}">log out</a>
+                Your are logging. <a href="{{ url_for('admin.logout') }}">log out</a>
             </p>
         {% endif %}
     </div>
