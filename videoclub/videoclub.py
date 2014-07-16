@@ -22,10 +22,23 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE
 app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 
-
-class MyAdmin(admin.AdminIndexView):
+"""class MyAdmin(admin.AdminIndexView):
+    
+    def is_visible(self):
+        if if not session.get('logged_in'):
+            return False
+        return True
+"""
+#class MyAdminExpose(MyAdmin):
+class MyAdminExpose(admin.AdminIndexView):
+    """    def _handle_view(self, name, **kwargs):
+        if not self.is_accessible():
+            return self.render("videoclub_admin/index.html")
+        return self.render("videoclub_admin/index.html")
+    """
     @expose('/')
     def index(self):
+        #if not self.is_accessible():
         if not session.get('logged_in'):
             return  redirect(url_for('.login'))
         return self.render("videoclub_admin/index.html")
@@ -77,6 +90,12 @@ class User (db.Model):
 
 
 class MovieAdmin(sqla.ModelView):
+
+    def is_visible(self):
+        if not session.get('logged_in'):
+            return False
+        return True
+
     column_display_pk = True
     form_columns = ['name', 'year', 'description', 'totalNumber', 'numberAvailable']
 
@@ -87,11 +106,9 @@ class LoginForm(Form):
     password = PasswordField("Password")
     submit = SubmitField("Login")
 
-    def validate_user(self, field):
-        print username
-        print password
-        print "hola"
-        user = db.session.query(User).filter_by(name=username, password = password).first()
+    def validate_user(self,field):
+        
+        user = db.session.query(User).filter_by(name=self.username, password = self.password).first()
         if user is None:
             raise ValidationError("Invalid user")
 
@@ -99,7 +116,7 @@ class LoginForm(Form):
 
 # Create admin
 #admin = admin.Admin(app, 'Videoclub', index_view=BaseView())
-admin = admin.Admin(app, 'Videoclub', index_view=MyAdmin(), base_template='videoclub_admin/myMaster.html')
+admin = admin.Admin(app, 'Videoclub', index_view=MyAdminExpose(), base_template='videoclub_admin/myMaster.html')
 admin.add_view(MovieAdmin(Movie, db.session))
 #admin.add_view(TyreAdmin(Tyre, db.session))
 
