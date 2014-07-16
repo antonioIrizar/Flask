@@ -33,9 +33,9 @@ def login():
     error = None
     if request.method == 'POST':
         #request.form['username'] need be in []
-        username = [request.form['username']]
-        password = [request.form['password']]
-        user = db.session.query(User).filter_by(name=username).first()
+        username = request.form['username']
+        password = request.form['password']
+        user = db.session.query(User).filter_by(name=username, password = password).first()
        
         if user is None:
             error = 'Invalid username or password'
