@@ -6,7 +6,7 @@ from wtforms import TextField, TextAreaField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, ValidationError
 from flask.ext import admin
 from flask.ext.admin.contrib import sqla
-from flask.ext.admin import Admin, BaseView, expose
+from flask.ext.admin import Admin, expose, helpers
 from sqlalchemy import UniqueConstraint
 
 # Create application
@@ -22,46 +22,29 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE
 app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 
-class MyView(BaseView):
+
+class MyAdmin(admin.AdminIndexView):
     @expose('/')
     def index(self):
-        return self.render('index.html',form=form)
-
+        if not session.get('logged_in'):
+            return  redirect(url_for('.login'))
+        return super(MyAdmin, self).index()
 #if not login.current_user.is_authenticated():
 #           return redirect(url_for('.login_view'))
-"""
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    error = None
-    if request.method == 'POST':
-        #request.form['username'] need be in []
-        username = request.form['username']
-        password = request.form['password']
-        user = db.session.query(User).filter_by(name=username, password = password).first()
-       
-        if user is None:
-            error = 'Invalid username or password'
-        else:
+    @expose('/login/', methods=['GET', 'POST'])
+    def login(self):
+        form = LoginForm()
+        if form.validate_on_submit():
             session['logged_in'] = True
             flash('You were logged in')
-            return redirect(url_for("admin.index"))            
-    return render_template('login.html', error=error)
-"""
+            return redirect(url_for('.index'))
+        return super(MyAdmin, self).index()
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        session['logged_in'] = True
-        flash('You were logged in')
-        return redirect(url_for('admin.index'))
-    return render_template('login.html', form=form)
-
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    flash('You were logged out')
-    return redirect(url_for('login'))
+    @expose('/logout/')
+    def logout(self):
+        session.pop('logged_in', None)
+        flash('You were logged out')
+        return redirect(url_for('.login'))
 
 class Movie(db.Model):
     __tablename__ = 'Movie'
@@ -109,7 +92,7 @@ class LoginForm(Form):
 
 # Create admin
 #admin = admin.Admin(app, 'Videoclub', index_view=BaseView())
-admin = admin.Admin(app, 'Videoclub')
+admin = admin.Admin(app, 'Videoclub', index_view=MyAdmin(), base_template='myMaster.html')
 admin.add_view(MovieAdmin(Movie, db.session))
 #admin.add_view(TyreAdmin(Tyre, db.session))
 
