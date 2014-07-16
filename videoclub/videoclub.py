@@ -28,18 +28,21 @@ class MyAdmin(admin.AdminIndexView):
     def index(self):
         if not session.get('logged_in'):
             return  redirect(url_for('.login'))
-        return super(MyAdmin, self).index()
+        return self.render("videoclub_admin/index.html")
+        #super(MyAdmin, self).index()
 #if not login.current_user.is_authenticated():
 #           return redirect(url_for('.login_view'))
     @expose('/login/', methods=['GET', 'POST'])
     def login(self):
+        #self.render("micarpeta/miplantilla.html", form = form)
         form = LoginForm(request.form)
         if form.validate_on_submit():
             session['logged_in'] = True
             flash('You were logged in')
             return redirect(url_for('.index'))
-        self._template_args['form'] = form
-        return super(MyAdmin, self).index()
+        #self._template_args['form'] = form
+        return self.render("videoclub_admin/index.html", form = form)
+        #super(MyAdmin, self).index()
 
     @expose('/logout/')
     def logout(self):
@@ -96,7 +99,7 @@ class LoginForm(Form):
 
 # Create admin
 #admin = admin.Admin(app, 'Videoclub', index_view=BaseView())
-admin = admin.Admin(app, 'Videoclub', index_view=MyAdmin(), base_template='myMaster.html')
+admin = admin.Admin(app, 'Videoclub', index_view=MyAdmin(), base_template='videoclub_admin/myMaster.html')
 admin.add_view(MovieAdmin(Movie, db.session))
 #admin.add_view(TyreAdmin(Tyre, db.session))
 
