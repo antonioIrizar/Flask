@@ -60,6 +60,7 @@ class MyAdminExpose(admin.AdminIndexView):
     @expose('/logout/')
     def logout(self):
         session.pop('logged_in', None)
+        session.pop('user',None)
         flash('You were logged out')
         return redirect(url_for('.login'))
 
@@ -116,7 +117,8 @@ class LoginForm(Form):
     submit = SubmitField("Login")
 
     def validate_username(self,field):
-        user = db.session.query(User).filter_by(name=field.data, password = field.data).first()
+        user = db.session.query(User).filter_by(name=field.data, password = self.password.data).first()
+        session['user'] = field.data
         if user is None:
             raise ValidationError("Invalid user")
 

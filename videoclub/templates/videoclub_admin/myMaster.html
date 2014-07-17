@@ -4,7 +4,7 @@
 {% if session.logged_in %}
 <div class="btn-group pull-right">
     <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-        <i class="icon-user"></i> Usuario<span class="caret"></span>
+        <i class="icon-user"></i> {{session.user}}<span class="caret"></span>
     </a>
     <ul class="dropdown-menu">
         <li><a href="{{ url_for('admin.logout') }}">Log out</a></li>
