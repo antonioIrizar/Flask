@@ -1,0 +1,22 @@
+{% extends 'videoclub_admin/myMaster.html' %}
+{% block body %}
+{{ super() }}
+    <div>
+        <h1>
+          Register
+        </h1>
+        {% if not session.logged_in %}
+        {% if form.error %}<p class=error><strong>Your form contains errors.</strong> {% endif %}
+        <form action="{{ url_for('admin.register') }}" method=post>
+            {{ form.hidden_tag() }}
+            <dl>
+                    <dt>{{form.username.label}}
+                <dd>{{ form.username}}
+                <dt>{{ form.password.label }}
+                <dd>{{ form.password }}
+                <dd>{{ form.submit }} <a href="/admin/">Login</a>
+            </dl>
+        </form>
+        {% endif %}
+    </div>
+{% endblock body %}
