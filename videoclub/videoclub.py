@@ -22,43 +22,28 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE
 app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 
-"""class MyAdmin(admin.AdminIndexView):
-    
-    def is_visible(self):
-        if if not session.get('logged_in'):
-            return False
-        return True
-"""
-#class MyAdminExpose(MyAdmin):
+
+#views of page
 class MyAdminExpose(admin.AdminIndexView):
-    """    def _handle_view(self, name, **kwargs):
-        if not self.is_accessible():
-            return self.render("videoclub_admin/index.html")
-        return self.render("videoclub_admin/index.html")
-    """
+
     @expose('/')
     def index(self):
-        #if not self.is_accessible():
+
         if not session.get('logged_in'):
             return  redirect(url_for('.login'))
         return self.render("videoclub_admin/index.html")
-        #super(MyAdmin, self).index()
-#if not login.current_user.is_authenticated():
-#           return redirect(url_for('.login_view'))
+
     @expose('/login/', methods=['GET', 'POST'])
     def login(self):
         error = None
-        #self.render("micarpeta/miplantilla.html", form = form)
         form = LoginForm(request.form)
         if form.validate_on_submit():
             session['logged_in'] = True
             flash('You were logged in')
             return redirect(url_for('.index'))
-        #self._template_args['form'] = form
         error = 'the username or password are wrong'
         flash('The username or password are wrong')
         return self.render("videoclub_admin/index.html", form = form, error=error)
-        #super(MyAdmin, self).index()
 
     @expose('/logout/')
     def logout(self):
@@ -81,7 +66,7 @@ class MyAdminExpose(admin.AdminIndexView):
         flash ("error in creation new user")
         return self.render("videoclub_admin/register.html", form = form)
 
-
+#Models of database
 
 class Movie(db.Model):
     __tablename__ = 'Movie'
@@ -108,9 +93,7 @@ class User (db.Model):
 		 print '%s - %s' % (self.name, self.password)
 
 
-
-class MovieAdmin(sqla.ModelView):
-
+class ViewModelAdmin(sqla.ModelView):
     def is_accessible(self):
         if not session.get('logged_in'):
             return False
@@ -120,6 +103,10 @@ class MovieAdmin(sqla.ModelView):
         if not session.get('logged_in'):
             return False
         return True
+        
+
+#view of movies to admin
+class MovieAdmin(ViewModelAdmin):
 
     def _handle_view(self, name, **kwargs):
         if not session.get('logged_in'):
@@ -128,6 +115,8 @@ class MovieAdmin(sqla.ModelView):
     column_display_pk = True
     form_columns = ['name', 'year', 'description', 'totalNumber', 'numberAvailable']
 
+
+#class to WTF-form
 
 class LoginForm(Form):
 
@@ -155,10 +144,8 @@ class  RegisterForm(Form):
 
 
 # Create admin
-#admin = admin.Admin(app, 'Videoclub', index_view=BaseView())
 admin = admin.Admin(app, 'Videoclub', index_view=MyAdminExpose(), base_template='videoclub_admin/myMaster.html')
 admin.add_view(MovieAdmin(Movie, db.session))
-#admin.add_view(TyreAdmin(Tyre, db.session))
 
 if __name__ == '__main__':    
 
