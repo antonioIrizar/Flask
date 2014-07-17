@@ -47,6 +47,7 @@ class MyAdminExpose(admin.AdminIndexView):
 #           return redirect(url_for('.login_view'))
     @expose('/login/', methods=['GET', 'POST'])
     def login(self):
+        error = None
         #self.render("micarpeta/miplantilla.html", form = form)
         form = LoginForm(request.form)
         if form.validate_on_submit():
@@ -54,7 +55,9 @@ class MyAdminExpose(admin.AdminIndexView):
             flash('You were logged in')
             return redirect(url_for('.index'))
         #self._template_args['form'] = form
-        return self.render("videoclub_admin/index.html", form = form)
+        error = 'the username or password are wrong'
+        flash('The username or password are wrong')
+        return self.render("videoclub_admin/index.html", form = form, error=error)
         #super(MyAdmin, self).index()
 
     @expose('/logout/')
@@ -63,6 +66,22 @@ class MyAdminExpose(admin.AdminIndexView):
         session.pop('user',None)
         flash('You were logged out')
         return redirect(url_for('.login'))
+
+    @expose('/register/', methods=['GET','POST'])
+    def register(self):
+        form = RegisterForm(request.form)
+        if form.validate_on_submit():
+            user = User()
+            user.name = form.username.data
+            user.password = form.password.data
+            db.session.add(user)
+            db.session.commit()
+            flash("New user create.")
+            return redirect(url_for('.login'))
+        flash ("error in creation new user")
+        return self.render("videoclub_admin/register.html", form = form)
+
+
 
 class Movie(db.Model):
     __tablename__ = 'Movie'
@@ -121,6 +140,17 @@ class LoginForm(Form):
         session['user'] = field.data
         if user is None:
             raise ValidationError("Invalid user")
+
+class  RegisterForm(Form):
+    username = TextField("Username")
+    password = PasswordField("Password")
+    submit = SubmitField("Register")
+
+    def validate_username(self,field):
+        user = db.session.query(User).filter_by(name=field.data).first()
+        if user is not None:
+            raise ValidationError("Username in use take othres please ")
+        
 
 
 

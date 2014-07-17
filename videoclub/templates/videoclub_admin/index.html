@@ -14,9 +14,10 @@
                 <dd>{{ form.username}}
                 <dt>{{ form.password.label }}
                 <dd>{{ form.password }}
-                <dd>{{ form.submit }}
+                <dd>{{ form.submit }} <a href="/admin/register">Register</a>
             </dl>
         </form>
+
         {% else %}
             <p>
                 Your are logging. <a href="{{ url_for('admin.logout') }}">log out</a>
