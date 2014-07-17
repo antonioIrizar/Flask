@@ -101,6 +101,10 @@ class MovieAdmin(sqla.ModelView):
             return False
         return True
 
+    def _handle_view(self, name, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('admin.login')) 
+
     column_display_pk = True
     form_columns = ['name', 'year', 'description', 'totalNumber', 'numberAvailable']
 
