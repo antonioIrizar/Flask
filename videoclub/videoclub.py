@@ -112,8 +112,6 @@ class LoginForm(Form):
     submit = SubmitField("Login")
 
     def validate_username(self,field):
-        print field.data
-        print "hola"
         user = db.session.query(User).filter_by(name=field.data, password = field.data).first()
         if user is None:
             raise ValidationError("Invalid user")
