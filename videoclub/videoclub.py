@@ -20,7 +20,7 @@ app.config['SECRET_KEY'] = '123456790'
 # Create in-memory database
 app.config['DATABASE_FILE'] = 'sample_db.sqlite'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE']
-#app.config['SQLALCHEMY_ECHO'] = True
+app.config['SQLALCHEMY_ECHO'] = False
 db = SQLAlchemy(app)
 
 
@@ -69,21 +69,35 @@ class MyAdminExpose(admin.AdminIndexView):
 
 #Models of database
 
+
+listUserMyMovie = db.Table('listUserMyMovie',
+    db.Column('myMovie_id', db.Integer, db.ForeignKey('myMovie.id')),
+    db.Column('user_name', db.String(50), db.ForeignKey('user.name'))
+    #column('movie_year',String,ForeignKey('movie.year'))
+ )
+
+listMovies = db.Table('listMovies',
+    db.Column('movie_id', db.Integer, db.ForeignKey('movie.id')),
+    db.Column('myMovie_id', db.Integer, db.ForeignKey('myMovie.id'))
+    #column('movie_year',String,ForeignKey('movie.year'))
+ )
+
 class Movie(db.Model):
-    __tablename__ = 'Movie'
-    name = db.Column(db.String(50), primary_key=True)
-    year = db.Column(db.Integer, primary_key=True)
+    __tablename__ = 'movie'
+    id = db.Column(db.Integer, primary_key = True)
+    name = db.Column(db.String(50),nullable=False )
+    year = db.Column(db.Integer, nullable=False)
     description = db.Column(db.String(150))
     totalNumber = db.Column(db.Integer)
     numberAvailable = db.Column(db.Integer)
 
-    #__table_args__ = (UniqueConstraint('name', 'year',name= 'das'),)
+    __table_args__ = (UniqueConstraint('name', 'year'),)
 
     def __unicode__(self):
         return self.name
 
 class User (db.Model):
-	__tablename__ = 'User'
+	__tablename__ = 'user'
 	name = db.Column(db.String(50),primary_key = True, unique=True)
 	password = db.Column(db.String(20))
 
@@ -92,6 +106,22 @@ class User (db.Model):
 
 	def __unicode__(self):
 		 print '%s - %s' % (self.name, self.password)
+
+class MyMovie (db.Model):
+    __tablename__ = 'myMovie'
+    id = (db.Column(db.Integer,primary_key=True))
+    catch = db.Column(db.Date)
+    giveBack = db.Column(db.Date)
+
+    user = db.relationship('User', secondary = listUserMyMovie, backref = 'myMovie')
+    movie = db.relationship('Movie', secondary = listMovies, backref = 'myMovie')
+
+    def __unicode__(self):
+        print '%s - %s' % (self.catch, self.giveBack)
+
+    def  __repr__(self):
+        return '%s','%s' % (self.catch,self.giveBack)
+
 
 
 class ViewModelAdmin(sqla.ModelView):
@@ -104,56 +134,26 @@ class ViewModelAdmin(sqla.ModelView):
         if not session.get('logged_in'):
             return False
         return True
-        
-
-#view of movies to admin
-class MovieAdmin(ViewModelAdmin):
 
     def _handle_view(self, name, **kwargs):
         if not session.get('logged_in'):
             return redirect(url_for('admin.login')) 
+        
 
-    def handle_view_exception(self, exc):
-        if isinstance(exc, IntegrityError):
-            #flash(gettext('Integrity error. %(message)s', message=exc.message), 'error')
-            flash('Integrity error')
-            return True
-
-        return super(ModelView, self).handle_view_exception(exc)
-
-    def create_model(self, form):
-        """
-Create model from form.
-
-:param form:
-Form instance
-        """
-        try:
-            model = self.model()
-            form.populate_obj(model)
-            self.session.add(model)
-            self._on_model_change(form, model, True)
-            self.session.commit()
-        except Exception as ex:
-            if not self.handle_view_exception(ex):
-                flash(gettext('Failed to create model. %(error)s', error=str(ex)), 'error')
-                log.exception('Failed to create model')
-
-            self.session.rollback()
-
-            return False
-        else:
-            self.after_model_change(form, model, True)
-
-        return True
-
-
+#view of movies to admin
+class MovieAdmin(ViewModelAdmin):
     
     column_display_pk = True
     form_columns = ['name', 'year', 'description', 'totalNumber', 'numberAvailable']
 
 
 #class to WTF-form
+
+class MyListMovies(ViewModelAdmin):
+
+    column_display_pk = True
+    form_columns = ['catch', 'giveBack']
+    
 
 class LoginForm(Form):
 
@@ -183,6 +183,7 @@ class  RegisterForm(Form):
 # Create admin
 admin = admin.Admin(app, 'Videoclub', index_view=MyAdminExpose(), base_template='videoclub_admin/myMaster.html')
 admin.add_view(MovieAdmin(Movie, db.session))
+admin.add_view(MyListMovies(MyMovie, db.session,category= 'hhhhh'))
 
 if __name__ == '__main__':    
 
