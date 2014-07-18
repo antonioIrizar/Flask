@@ -8,6 +8,7 @@ from flask.ext import admin
 from flask.ext.admin.contrib import sqla
 from flask.ext.admin import Admin, expose, helpers
 from sqlalchemy import UniqueConstraint
+from sqlalchemy.exc import IntegrityError
 
 # Create application
 app = Flask(__name__)
@@ -19,7 +20,7 @@ app.config['SECRET_KEY'] = '123456790'
 # Create in-memory database
 app.config['DATABASE_FILE'] = 'sample_db.sqlite'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE']
-app.config['SQLALCHEMY_ECHO'] = True
+#app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 
 
@@ -112,6 +113,42 @@ class MovieAdmin(ViewModelAdmin):
         if not session.get('logged_in'):
             return redirect(url_for('admin.login')) 
 
+    def handle_view_exception(self, exc):
+        if isinstance(exc, IntegrityError):
+            #flash(gettext('Integrity error. %(message)s', message=exc.message), 'error')
+            flash('Integrity error')
+            return True
+
+        return super(ModelView, self).handle_view_exception(exc)
+
+    def create_model(self, form):
+        """
+Create model from form.
+
+:param form:
+Form instance
+        """
+        try:
+            model = self.model()
+            form.populate_obj(model)
+            self.session.add(model)
+            self._on_model_change(form, model, True)
+            self.session.commit()
+        except Exception as ex:
+            if not self.handle_view_exception(ex):
+                flash(gettext('Failed to create model. %(error)s', error=str(ex)), 'error')
+                log.exception('Failed to create model')
+
+            self.session.rollback()
+
+            return False
+        else:
+            self.after_model_change(form, model, True)
+
+        return True
+
+
+    
     column_display_pk = True
     form_columns = ['name', 'year', 'description', 'totalNumber', 'numberAvailable']
 
