@@ -11,11 +11,13 @@ from sqlalchemy import UniqueConstraint
 from sqlalchemy.exc import IntegrityError
 from datetime import date
 from flask.ext.admin.actions import action
+from flask.ext.babel import Babel
+from flask.ext.babel import gettext, ngettext
 
 # Create application
 app = Flask(__name__)
 
-
+babel = Babel(app)
 # Create dummy secrey key so we can use sessions
 app.config['SECRET_KEY'] = '123456790'
 
@@ -23,8 +25,20 @@ app.config['SECRET_KEY'] = '123456790'
 app.config['DATABASE_FILE'] = 'sample_db.sqlite'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE']
 app.config['SQLALCHEMY_ECHO'] = False
+app.config.from_pyfile('babel.cfg')
 db = SQLAlchemy(app)
 
+
+# available languages
+LANGUAGES = {
+    'en': 'English',
+    'es': 'Espanol'
+}
+
+
+@babel.localeselector
+def get_locale():
+    return request.accept_languages.best_match(LANGUAGES.keys())
 
 #views of page
 class MyAdminExpose(admin.AdminIndexView):
@@ -42,7 +56,7 @@ class MyAdminExpose(admin.AdminIndexView):
         form = LoginForm(request.form)
         if form.validate_on_submit():
             session['logged_in'] = True
-            flash('You were logged in')
+            flash(gettext(u'You were logged in'))
             return redirect(url_for('.index'))
         error = 'the username or password are wrong'
         flash('The username or password are wrong')
