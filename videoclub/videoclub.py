@@ -9,6 +9,8 @@ from flask.ext.admin.contrib import sqla
 from flask.ext.admin import Admin, expose, helpers
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.exc import IntegrityError
+from datetime import date
+from flask.ext.admin.actions import action
 
 # Create application
 app = Flask(__name__)
@@ -67,6 +69,7 @@ class MyAdminExpose(admin.AdminIndexView):
         flash ("error in creation new user")
         return self.render("videoclub_admin/register.html", form = form)
 
+
 #Models of database
 
 
@@ -88,13 +91,16 @@ class Movie(db.Model):
     name = db.Column(db.String(50),nullable=False )
     year = db.Column(db.Integer, nullable=False)
     description = db.Column(db.String(150))
-    totalNumber = db.Column(db.Integer)
-    numberAvailable = db.Column(db.Integer)
+    totalNumber = db.Column(db.Integer, nullable=False)
+    numberAvailable = db.Column(db.Integer, nullable=False)
 
     __table_args__ = (UniqueConstraint('name', 'year'),)
 
     def __unicode__(self):
         return self.name
+
+    def  __repr__(self):
+        return '%s' % (self.name)
 
 class User (db.Model):
 	__tablename__ = 'user'
@@ -102,7 +108,7 @@ class User (db.Model):
 	password = db.Column(db.String(20))
 
 	def  __repr__(self):
-		return '%s','%s' % (self.name,self.password)
+		return '%s' % (self.name)
 
 	def __unicode__(self):
 		 print '%s - %s' % (self.name, self.password)
@@ -146,14 +152,55 @@ class MovieAdmin(ViewModelAdmin):
     column_display_pk = True
     form_columns = ['name', 'year', 'description', 'totalNumber', 'numberAvailable']
 
+    @action('Take Movie','Rent',
+            'do you want rent the select movie?')
+    def action_prueba(self, ids):
+        #query = get_query_for_ids(self.get_query(), self.model, ids)
+        count = 0
+
+        #for m in query.all():
+         #   m.update({"numberAvailable": 1 })
+         #   count += 1
+
+        #self.session.commit()
+
+        #flash(ngettext('Model was successfully deleted.','%(count)s models were successfully deleted.',count,count=count))
+        for i in ids:
+            print i
+            movie= db.session.query(Movie).filter_by(id=i).first()
+            if movie.numberAvailable == 0:
+                flash("Error one or more movies not available")
+                db.session.rollback()
+                return
+            else: 
+                db.session.query(self.model).filter_by(id=i).update({"numberAvailable" : movie.numberAvailable-1})
+                today = date.today()
+                if today.day == 30 :
+                    myMovie = MyMovie(catch = today, giveBack = date(today.year,today.month,1))
+                else:
+                    myMovie = MyMovie(catch = today, giveBack = date(today.year,today.month,31))
+                db.session.add(myMovie)
+                myMovie.user.append(db.session.query(User).filter_by(name = session.get('user')).first())
+                myMovie.movie.append(movie)
+                #duda por que esta linea no vale porque modifica los dos
+                #numberAvailable.query.update({"numberAvailable" : numberAvailable.numberAvailable-1})
+                
+        db.session.commit()
+        
+        flash("You rent de movie")
+        #print "tarara"
+
 
 #class to WTF-form
 
 class MyListMovies(ViewModelAdmin):
 
-    column_display_pk = True
-    form_columns = ['catch', 'giveBack']
-    
+    @expose('/')
+    def index(self):
+        #preguntar si se puede acceder desde los templates al resto de atributos de las relaciones many to many es decir algo asi  ejemplo:movie.movie.id 
+        myMovies = db.session.query(MyMovie).filter(MyMovie.user.any(name=session.get('user'))).all()
+        return self.render('videoclub_admin/myMovies.html', myMovies = myMovies)
+ 
 
 class LoginForm(Form):
 
@@ -183,7 +230,7 @@ class  RegisterForm(Form):
 # Create admin
 admin = admin.Admin(app, 'Videoclub', index_view=MyAdminExpose(), base_template='videoclub_admin/myMaster.html')
 admin.add_view(MovieAdmin(Movie, db.session))
-admin.add_view(MyListMovies(MyMovie, db.session,category= 'hhhhh'))
+admin.add_view(MyListMovies(MyMovie, db.session))
 
 if __name__ == '__main__':    
 
@@ -194,8 +241,27 @@ if __name__ == '__main__':
     db.drop_all()
     db.create_all()
     test_user = User(name="test", password="test")
+    movie = Movie(name = "peli1", year = 2014,totalNumber= 1 ,numberAvailable= 1)
+    movie2 = Movie(name = "peli2", year = 2014, totalNumber = 14 ,numberAvailable=0)
+    db.session.add(movie)
+    db.session.add(movie2)
     db.session.add(test_user)
+    today = date.today()
+    if today.day == 30:
+        myMovie = MyMovie(catch = today, giveBack = date(today.year,today.month,1))
+        myMovie2 = MyMovie(catch = today, giveBack = date(today.year,today.month,1))
+    else:
+        myMovie = MyMovie(catch = today, giveBack = date(today.year,today.month,today.day+1))
+        myMovie2 = MyMovie(catch = today, giveBack = date(today.year,today.month,today.day+1))
+    db.session.add(myMovie)
+    myMovie.user.append(test_user)
+    myMovie.movie.append(movie)
+    
+    db.session.add(myMovie2)
+    myMovie2.movie.append(movie2)
+    myMovie2.user.append(test_user)
 
     db.session.commit()
+
     # Start app
     app.run(debug=True)

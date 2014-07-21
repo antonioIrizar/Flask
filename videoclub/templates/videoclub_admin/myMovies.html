@@ -1,0 +1,19 @@
+{% extends 'videoclub_admin/myMaster.html' %}
+{% block body %}
+    <table class="table">
+	<tr>
+		<th>catch</th>
+		<th>Give back</th>
+        <th>User</th>
+        <th>Movie</th>
+	</tr>
+    {% for movie in myMovies %}
+        <tr>
+         	<td>{{ movie.catch }}</td>
+         	<td>{{ movie.giveBack }}</td>
+            <td>{{ movie.user }}</td>
+            <td>{{ movie.movie }}</td>
+        </tr>
+    {% endfor %}
+    </table>
+{% endblock %}
