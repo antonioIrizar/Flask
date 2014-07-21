@@ -25,9 +25,9 @@ app.config['SECRET_KEY'] = '123456790'
 app.config['DATABASE_FILE'] = 'sample_db.sqlite'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE']
 app.config['SQLALCHEMY_ECHO'] = False
-app.config.from_pyfile('babel.cfg')
+#app.config.from_pyfile('babel.cfg')
 db = SQLAlchemy(app)
-
+WTF_I18N_ENABLED = True
 
 # available languages
 LANGUAGES = {
@@ -56,7 +56,7 @@ class MyAdminExpose(admin.AdminIndexView):
         form = LoginForm(request.form)
         if form.validate_on_submit():
             session['logged_in'] = True
-            flash(gettext(u'You were logged in'))
+            flash('You were logged in')
             return redirect(url_for('.index'))
         error = 'the username or password are wrong'
         flash('The username or password are wrong')
