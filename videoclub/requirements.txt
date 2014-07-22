@@ -3,6 +3,7 @@ Flask==0.10.1
 Flask-Admin==1.0.8
 Flask-Babel==0.9
 Flask-SQLAlchemy==1.0
+Flask-Testing==0.4.1
 Flask-WTF==0.10.0
 Jinja2==2.7.3
 MarkupSafe==0.23
