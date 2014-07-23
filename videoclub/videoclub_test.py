@@ -1,8 +1,9 @@
 import os
-import videoclub
 from videoclub import db,Flask,User,app
 import unittest
 import tempfile
+from flask import request
+import requests
 
 class VideoclubTestCase(unittest.TestCase):
     """
@@ -27,7 +28,7 @@ class VideoclubTestCase(unittest.TestCase):
         app.config['CSRF_ENABLED'] = False
         app.config['DATABASE_FILE'] = 'test.sqlite'
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE']
-        self.app = app.test_client()
+        #self.app = app.test_client()
         db.create_all()
         test_user = User(name="test", password="test")
         db.session.add(test_user)

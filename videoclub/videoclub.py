@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import os
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -13,6 +16,7 @@ from datetime import date
 from flask.ext.admin.actions import action
 from flask.ext.babel import Babel
 from flask.ext.babel import gettext, ngettext
+import requests
 
 # Create application
 app = Flask(__name__)
